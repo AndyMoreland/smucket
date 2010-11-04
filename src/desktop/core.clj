@@ -1,14 +1,28 @@
 (ns desktop.core
-  (:use (clj-time core))
-  (:import (java.io File))
-  (:import (org.joda.time DateTime Instant)))
+  (:use somnium.congomongo)
+  (:require [clojure.contrib.string :as st])
+  (:import java.io.File
+           [org.joda.time DateTime Instant]
+           java.util.Date))
+
 
 (def desktop-dir "/Users/andrew/Desktop")
 
-(def last-check (now))
+(def last-check (Date.))
+
+(def bad-files #{".DS_Store" ".localized"})
 
 (defn good-file? [file]
-  (and (not (= ".DS_Store" file)) (not (= ".localized" file)))
+  (not (bad-files file))
+  )
+
+(defn strip-tag [string tag]
+  (st/replace-re (re-pattern (str "(?s)</?" tag ">")) "" string)
+  )
+
+(defn isolate-tag [string tag]
+  "keep only the contents of a tag"
+  (map #(nth % 1) (re-seq (re-pattern (str "(?s)<" tag ">(.*?)</" tag ">")) string))
   )
 
 (defn last-modified
@@ -27,11 +41,17 @@
          (filter good-file? (seq files)))
     ))
 
+(defn callback [file]
+  (insert! :files { :name file
+                    :words (frequencies (st/split #"\W+" (slurp file)))})
+  )
+
+
 (defn process
   "run callbacks on a changed file"
   [file]
   ;;; check filetype, check name, run registered callbacks
-  (callback file)
+  ;(callback file)
   )
 
 (defn callback [file]
@@ -41,9 +61,6 @@
 (defn run
   "main loop"
   []
-  (doseq [file (filter #(>= 0 (.compareTo last-check (Date. (last-modified %)))) (list-desktop-files))] (process file))
-  (def last-check (Date.)))
-  
-
-
-
+  (doseq [file (filter #(>= 0 (.compareTo last-check (Date. (last-modified %)))) (list-desktop-files))]
+    (process file))
+  (def last-check (Date.)))  
