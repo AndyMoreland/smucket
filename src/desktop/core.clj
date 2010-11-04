@@ -8,7 +8,7 @@
 (def last-check (now))
 
 (defn good-file? [file]
-  (and (not (= ".DS_Store" %)) (not (= ".localized" %)))
+  (and (not (= ".DS_Store" file)) (not (= ".localized" file)))
   )
 
 (defn last-modified
@@ -35,7 +35,7 @@
   )
 
 (defn callback [file]
-  (println (split #"\W+" (slurp file)))
+  (println (frequencies (split #"\W+" (slurp file))))
   )
 
 (defn run
