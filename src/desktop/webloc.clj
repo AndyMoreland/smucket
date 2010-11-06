@@ -30,12 +30,17 @@
 
 (defn source-for [url]
   "Returns cleaned html source given url"
-  (let [cleaner (HtmlCleaner.)
+  (let [
+        cleaner (HtmlCleaner.)
         props (initialize-cleaner-props cleaner)
         node (.clean cleaner (slurp "http://www.google.com"))
-        serializer (SimpleXmlSerializer. props)]
+        serializer (SimpleXmlSerializer. props)
+        ]
     (.getXmlAsString serializer node))
   )
+
+(defn string-to-xml-struct-map [string]
+  (xml/parse (java.io.ByteArrayInputStream. (.getBytes string))))
 
 (defn process-webloc [file]
   (let [url (extract-url-from-webloc file)]
