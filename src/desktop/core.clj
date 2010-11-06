@@ -1,8 +1,8 @@
 (ns desktop.core
   (:use somnium.congomongo)
   (:require [clojure.contrib.string :as st])
-  (:import java.io.File
-           [org.joda.time DateTime Instant]
+  (:import [org.joda.time DateTime Instant]
+           java.io.File
            java.util.Date))
 
 
@@ -43,7 +43,7 @@
 
 (defn callback [file]
   (insert! :files { :name file
-                    :words (frequencies (st/split #"\W+" (slurp file)))})
+                   :words (frequencies (st/split #"\W+" (slurp file)))})
   )
 
 
@@ -55,7 +55,7 @@
   )
 
 (defn callback [file]
-  (println (frequencies (split #"\W+" (slurp file))))
+  (println (frequencies (st/split #"\W+" (slurp file))))
   )
 
 (defn run
