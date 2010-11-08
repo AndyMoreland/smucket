@@ -3,7 +3,8 @@
         [clojure.xml :as xml]
         [clojure.zip :as zip]
         [clojure.contrib.zip-filter.xml :as zf] )
-  (:require [clojure.contrib.string :as st])
+  (:require [clojure.contrib.string :as st]
+            [net.cgrand.enlive-html :as html])
   (:import java.io.File
            java.util.Date
            [org.htmlcleaner HtmlCleaner SimpleXmlSerializer]
@@ -38,6 +39,12 @@
         ]
     (.getXmlAsString serializer node))
   )
+
+(defn scrape [url]
+  (html/html-resource (java.net.URL. url)))
+
+(defn count-words [string]
+  (count (st/split #" " string)))
 
 (defn string-to-xml-struct-map [string]
   (xml/parse (java.io.ByteArrayInputStream. (.getBytes string))))
