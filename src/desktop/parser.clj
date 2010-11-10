@@ -1,12 +1,33 @@
 (ns desktop.htmlparser.core
-  (:use [clojure.xml :as xml]
-        [clojure.zip :as zip]
-        [clojure.contrib.zip-filter.xml :as zf] )
-  (:require [clojure.contrib.string :as st])
+  (:require [clojure.contrib.string :as st]
+            [infer.measures :only [sparse-dot-product]] )
   (:import [org.htmlcleaner HtmlCleaner DomSerializer]
            [org.apache.commons.lang StringEscapeUtils]
            [org.w3c.dom Document Node]))
 
+
+(def div-weight-map {
+      :most-child-paragraphs 100
+      :bad-id -50
+      :bad-class -50
+      :good-id 25
+      :good-class 25
+      :num-words 0.01
+      :commas 1
+      :inner-divs -1
+      :long-text? 1.0 } )
+
+(defn div-weight {
+                  :most-child-paragraphs
+                  :bad-id
+                  :bad-class
+                  :good-id
+                  :good-class
+                  :num-words
+                  :commas
+                  :inner-divs
+                  :long-text?
+                  })
 
 (defn initialize-cleaner-props [cleaner]
   "Takes an HTMLCleaner object and makes it ignore comments, script tags, and style tags"
@@ -38,7 +59,7 @@
   "Returns the node with the largest number of child paragraphs"
   (first (reverse
           (sort-by (fn [node] (count (children-matching node #(= (.getNodeName %) "p"))))
-                           nodes))))
+                   nodes))))
 
 (defn dom [url]
   "Returns cleaned html source given url"
