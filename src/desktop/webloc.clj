@@ -1,9 +1,8 @@
 (ns desktop.webloc.core
-  (:use somnium.congomongo
-        [clojure.xml :as xml]
-        [clojure.zip :as zip]
-        [clojure.contrib.zip-filter.xml :as zf] )
-  (:require [clojure.contrib.string :as st])
+  (:require [clojure.contrib.string :as st]
+              [clojure.xml :as xml]
+              [clojure.zip :as zip]
+              [clojure.contrib.zip-filter.xml :as zf] )
   (:import java.io.File
            java.util.Date
            [org.htmlcleaner HtmlCleaner DomSerializer]
