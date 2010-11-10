@@ -38,7 +38,12 @@
   "Returns the node with the largest number of child paragraphs"
   (first (reverse
           (sort-by (fn [node] (count (children-matching node #(= (.getNodeName %) "p"))))
-                           nodes))))
+                   nodes))))
+
+(defn find-content-div [dom]
+  "Returns the node that most likely to contain the majority of the content of the page"
+  
+  )
 
 (defn dom [url]
   "Returns cleaned html source given url"
