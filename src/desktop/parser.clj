@@ -5,6 +5,8 @@
            [org.apache.commons.lang StringEscapeUtils]
            [org.w3c.dom Document Node]))
 
+                                        ; TODO: make sure there are spaces after punctuation
+                                        ; TODO: Replace &apos; correctly
 
 
 (def bad-words
@@ -78,7 +80,16 @@
 
 (defn children-matching [node pred]
   "Returns children matching a predicate"
-  (filter pred (do-children node identity))  )
+  (filter pred (do-children node identity)))
+
+(defn remove-children-matching [node pred]
+  "Removes children matching a predicate and returns the node"
+  (doseq [child (children-matching node pred)] (.removeChild node child))
+  node)
+
+(defn attribute [node name]
+  (let [attribute (.getNamedItem (.getAttributes node) name)]
+    (if attribute (.getValue attribute) nil)))
 
 (defn dom [url]
   "Returns cleaned html source given url"
@@ -102,5 +113,4 @@
     (if (> (count (.getTextContent content)) 50) content nil)))
 
 (defn find-content [url]
-  (st/replace-re #"(\n|\r)*" " " (StringEscapeUtils/unescapeHtml (.getTextContent (find-content-div (dom url)))))
-  )
+  (st/replace-re #"(\n|\r)+" " " (StringEscapeUtils/unescapeHtml (.getTextContent (find-content-div (dom url))))))
