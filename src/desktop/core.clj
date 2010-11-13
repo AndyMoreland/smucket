@@ -3,7 +3,8 @@
             [somnium.congomongo :as cm])
   (:import [org.joda.time DateTime Instant]
            java.io.File
-           java.util.Date))
+           java.util.Date
+           java.lang.Thread))
 
 
 (def desktop-dir "/Users/andrew/Desktop")
@@ -51,16 +52,30 @@
   "run callbacks on a changed file"
   [file]
   ;;; check filetype, check name, run registered callbacks
-  ;(callback file)
+  (callback file)
   )
 
 (defn callback [file]
   (println (frequencies (st/split #"\W+" (slurp file))))
   )
 
-(defn run
-  "main loop"
-  []
-  (doseq [file (filter #(>= 0 (.compareTo last-check (Date. (last-modified %)))) (list-desktop-files))]
-    (process file))
-  (def last-check (Date.)))  
+(defn main []
+  "Starts the loop in another threaD"
+  (def keep-running (atom true))
+  (.start (Thread. run)))
+
+(defn stop []
+  "Stops the loop"
+  (reset! keep-running false))
+
+(defn run []
+  (loop [date (Date.)]
+    (Thread/sleep 1000)
+    (println "Firing.")
+    (doseq [file (filter #(>= 0 (.compareTo date (Date. (last-modified %)))) (list-desktop-files))]
+      (process file))
+    
+    (if @keep-running
+      (recur (Date.))
+      (println "Terminating"))))
+

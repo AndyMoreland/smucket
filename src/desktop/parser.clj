@@ -9,13 +9,29 @@
                                         ; TODO: Replace &apos; correctly
 
 
+(defn do-children [node func]
+  "Analagous to running #map over a collection of children"
+  (if (not (and node (.hasChildNodes node)))
+    []
+    (let [children (.getChildNodes node)]
+      (doall (for [i (range 0 (.getLength children))]
+               (func (.item children i)))))))
+
+(defn children-matching [node pred]
+  "Returns children matching a predicate"
+  (filter pred (do-children node identity)))
+
+(defn count-words [string]
+  (count (st/split #" " string)))
+
+
 (def bad-words
      ; Classes/IDs matching these are "bad"
-     #"comment|footer|meta|footnote|foot|navigation")
+     #"comment|comments|com|reviews|review|footer|meta|footnote|foot|navigation")
 
 (def good-words
      ; Classes/IDs matching these are "good"
-     #"article|post|hentry|entry|content|text|body|article")
+     #"article|post|hentry|entry|content|text|body|article|main")
 
 (def div-weight-map {
                      :child-paragraphs 100
@@ -70,17 +86,6 @@
          (for [i (range 0 (.getLength nodes))]
            (.item nodes i)))))
 
-(defn do-children [node func]
-  "Analagous to running #map over a collection of children"
-  (if (not (and node (.hasChildNodes node)))
-    []
-    (let [children (.getChildNodes node)]
-      (doall (for [i (range 0 (.getLength children))]
-               (func (.item children i)))))))
-
-(defn children-matching [node pred]
-  "Returns children matching a predicate"
-  (filter pred (do-children node identity)))
 
 (defn remove-children-matching [node pred]
   "Removes children matching a predicate and returns the node"
@@ -88,8 +93,9 @@
   node)
 
 (defn attribute [node name]
-  (let [attribute (.getNamedItem (.getAttributes node) name)]
-    (if attribute (.getValue attribute) nil)))
+  (let [attributes (.getAttributes node)
+        attribute (if attributes (.getNamedItem attributes name) nil)]
+    (if attribute (.getValue attribute) "")))
 
 (defn dom [url]
   "Returns cleaned html source given url"
@@ -101,8 +107,13 @@
         ]
     (.createDOM serializer node)))
 
-(defn count-words [string]
-  (count (st/split #" " string)))
+
+
+
+
+
+;;;;;; These are the two functions that should really be called
+
 
 (defn find-content-div [dom]
   "Returns the node that most likely to contain the majority of the content of the page"
@@ -111,6 +122,12 @@
                (fn [div] (infer.measures/sparse-dot-product (weight-div div) div-weight-map))
                (elements dom "div"))]
     (if (> (count (.getTextContent content)) 50) content nil)))
+
+(defn clean-content-div [div]
+  (remove-children-matching div
+                            #(not (= 0
+                                     (+ (count (re-seq bad-words (attribute % "class")))
+                                        (count (re-seq bad-words (attribute % "id"))))))))
 
 (defn find-content [url]
   (st/replace-re #"(\n|\r)+" " " (StringEscapeUtils/unescapeHtml (.getTextContent (find-content-div (dom url))))))
