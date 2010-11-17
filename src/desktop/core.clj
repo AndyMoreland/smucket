@@ -56,17 +56,9 @@
   )
 
 (defn callback [file]
-  (println (frequencies (st/split #"\W+" (slurp file))))
+  (println "hi")
+  (println (desktop.htmlparser.core/find-content (desktop.webloc.core/extract-url-from-webloc file)))
   )
-
-(defn main []
-  "Starts the loop in another threaD"
-  (def keep-running (atom true))
-  (.start (Thread. run)))
-
-(defn stop []
-  "Stops the loop"
-  (reset! keep-running false))
 
 (defn run []
   (loop [date (Date.)]
@@ -78,4 +70,13 @@
     (if @keep-running
       (recur (Date.))
       (println "Terminating"))))
+
+(defn main []
+  "Starts the loop in another threaD"
+  (def keep-running (atom true))
+  (.start (Thread. run)))
+
+(defn stop []
+  "Stops the loop"
+  (reset! keep-running false))
 
