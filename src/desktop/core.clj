@@ -9,54 +9,47 @@
 
 (def desktop-dir "/Users/andrew/Desktop")
 
-(def last-check (Date.))
+(def keep-running (atom true))
 
 (def bad-files #{".DS_Store" ".localized"})
 
+(defn extract-file-extensions [file]
+  (rest (st/split #"\." (last (st/split #"\/" file)))))
+
 (defn good-file? [file]
-  (not (bad-files file))
-  )
+  (not (bad-files file)))
 
 (defn strip-tag [string tag]
-  (st/replace-re (re-pattern (str "(?s)</?" tag ">")) "" string)
-  )
+  (st/replace-re (re-pattern (str "(?s)</?" tag ">")) "" string))
 
 (defn isolate-tag [string tag]
   "keep only the contents of a tag"
-  (map #(nth % 1) (re-seq (re-pattern (str "(?s)<" tag ">(.*?)</" tag ">")) string))
-  )
+  (map #(nth % 1) (re-seq (re-pattern (str "(?s)<" tag ">(.*?)</" tag ">")) string)))
 
 (defn last-modified
   "returns the last modified time of a given file"
   [file-path]
   (let [file (File. file-path)]
-    (.lastModified file)
-    )
-  )
+    (.lastModified file)))
 
 (defn list-desktop-files
   "returns a list of files on the desktop"
   []
   (let [files (.list (File. desktop-dir))]
     (map #(str desktop-dir "/" %)
-         (filter good-file? (seq files)))
-    ))
+         (filter good-file? (seq files)))))
 
 (defn callback [file]
   (cm/insert! :files { :name file
-                   :words (frequencies (st/split #"\W+" (slurp file)))})
-  )
-
+                   :words (frequencies (st/split #"\W+" (slurp file)))}))
 
 (defn process
   "run callbacks on a changed file"
   [file]
   ;;; check filetype, check name, run registered callbacks
-  (callback file)
-  )
+  (callback file))
 
 (defn callback [file]
-  (println "hi")
   (println (desktop.htmlparser.core/find-content (desktop.webloc.core/extract-url-from-webloc file)))
   )
 
