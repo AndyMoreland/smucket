@@ -8,9 +8,7 @@
 
 
 (def desktop-dir "/Users/andrew/Desktop")
-
 (def keep-running (atom true))
-
 (def bad-files #{".DS_Store" ".localized"})
 
 (defn extract-file-extensions [file]
@@ -18,13 +16,6 @@
 
 (defn good-file? [file]
   (not (bad-files file)))
-
-(defn strip-tag [string tag]
-  (st/replace-re (re-pattern (str "(?s)</?" tag ">")) "" string))
-
-(defn isolate-tag [string tag]
-  "keep only the contents of a tag"
-  (map #(nth % 1) (re-seq (re-pattern (str "(?s)<" tag ">(.*?)</" tag ">")) string)))
 
 (defn last-modified
   "returns the last modified time of a given file"

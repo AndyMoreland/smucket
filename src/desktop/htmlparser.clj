@@ -27,22 +27,24 @@
 
 (def bad-words
      ; Classes/IDs matching these are "bad"
-     #"comment|comments|com|reviews|review|footer|meta|footnote|foot|navigation")
+     #"comment|comments|com|reviews|review|footer|meta|footnote|foot|navigation|side|sidebar|nav|container|module|answer")
 
 (def good-words
      ; Classes/IDs matching these are "good"
-     #"article|post|hentry|entry|content|text|body|article|main")
+     #"article|post|hentry|entry|content|text|body|article|main|post-text|entry-text")
+(def punctuation
+     #"[!\"#$%&\'()*+,-./:;<=>?@\[\][\\]^_`{|}~]")
 
 (def div-weight-map {
                      :child-paragraphs 100
-                     :bad-id -50
-                     :bad-class -50
-                     :good-id 25
-                     :good-class 25
+                     :bad-id -150
+                     :bad-class -150
+                     :good-id 75
+                     :good-class 75
                      :num-words 0.01
                      :commas 1
                      :inner-divs -1
-                     :long-text? 1.0 } )
+                     :long-text? 100.0 } )
 
 (defn weight-div [node]
   "Takes an HTML node and returns a map containing numeric 'facts' about the div that are important; will be cross-producted with the weight map above"
@@ -66,6 +68,9 @@
    
    :commas
    (count (re-seq #"," (.getTextContent node)))
+
+   :general-punctuation
+   (count (re-seq punctuation (.getTextContent node)))
    
    :inner-divs
    (count (children-matching node #(= (.getNodeName %) "div")))
@@ -112,18 +117,27 @@
 
 (defn find-content-div [dom]
   "Returns the node that most likely to contain the majority of the content of the page"
-  (let [content (apply
-               max-key
-               (fn [div] (infer.measures/sparse-dot-product (weight-div div) div-weight-map))
-               (elements dom "div"))]
-    (if (> (count (.getTextContent content)) 50) content nil)))
+  (let [divs (filter #(not (nil? %)) (doto (elements dom "div") (clean-content-divs) (identity)))]
+    (if (not (= 0 (count divs)))
+      (let [content (apply max-key
+                           (fn [div] (infer.measures/sparse-dot-product (weight-div div) div-weight-map))
+                           divs)]
+        (if (> (count (.getTextContent content)) 50) content nil)) nil)))
 
-(defn clean-content-div [div]
-  (remove-children-matching div
-                            #(not (= 0
-                                     (+ (count (re-seq bad-words (attribute % "class")))
-                                        (count (re-seq bad-words (attribute % "id"))))))))
+(defn clean-content-divs [divs]
+  (doseq [div divs]
+    (remove-children-matching div
+                              #(not (= 0
+                                       (+ (count (re-seq bad-words (attribute % "class")))
+                                          (count (re-seq bad-words (attribute % "id")))))))))
+
+(defn clean-content [content]
+  (st/lower-case (st/replace-re punctuation " " (st/replace-re #"&apos;" "'" (st/replace-re #"(\n|\r)+" " " (StringEscapeUtils/unescapeHtml content))))))
 
 (defn find-content [url]
-  (println "hi")
-  (st/replace-re #"(\n|\r)+" " " (StringEscapeUtils/unescapeHtml (.getTextContent (find-content-div (dom url))))))
+  (let [content-div (find-content-div (dom url))]
+    (if content-div (clean-content (.getTextContent content-div)) nil)))
+
+(defn words [string]
+  (st/split #" " string))
+
