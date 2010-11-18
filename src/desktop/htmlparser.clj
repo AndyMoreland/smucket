@@ -1,6 +1,7 @@
 (ns desktop.htmlparser.core
   (:require [clojure.contrib.string :as st]
-            [infer.measures :only [sparse-dot-product]] )
+            [infer.measures :only [sparse-dot-product] :as im]
+            [clojure.contrib.profile :as p])
   (:import [org.htmlcleaner HtmlCleaner DomSerializer]
            [org.apache.commons.lang StringEscapeUtils]
            [org.w3c.dom Document Node]))
@@ -36,47 +37,47 @@
      #"[!\"#$%&\'()*+,-./:;<=>?@\[\][\\]^_`{|}~]")
 
 (def div-weight-map {
-                     :child-paragraphs 100
+                     :child-paragraphs 150
                      :bad-id -150
                      :bad-class -150
                      :good-id 75
                      :good-class 75
                      :num-words 0.01
                      :commas 1
-                     :inner-divs -1
+                     :inner-divs -50
                      :long-text? 100.0 } )
 
 (defn weight-div [node]
   "Takes an HTML node and returns a map containing numeric 'facts' about the div that are important; will be cross-producted with the weight map above"
   {:child-paragraphs
-   (count (children-matching node #(= (.getNodeName %) "p")))
+   (p/prof :child-paragraphs (count (children-matching node #(= (.getNodeName %) "p"))))
    
    :bad-id
-   (count (re-seq bad-words (.getAttribute node "id")))
+   (p/prof :bad-id (count (re-seq bad-words (.getAttribute node "id"))))
    
    :bad-class
-   (count (re-seq bad-words (.getAttribute node "class")))
+   (p/prof :bad-class (count (re-seq bad-words (.getAttribute node "class"))))
    
    :good-id
-   (count (re-seq good-words (.getAttribute node "id")))
+   (p/prof :good-id (count (re-seq good-words (.getAttribute node "id"))))
    
    :good-class
-   (count (re-seq good-words (.getAttribute node "class")))
+   (p/prof :good-class (count (re-seq good-words (.getAttribute node "class"))))
    
    :num-words
-   (count-words (.getTextContent node))
+   (p/prof :num-words (count-words (.getTextContent node)))
    
    :commas
-   (count (re-seq #"," (.getTextContent node)))
+   (p/prof :commas (count (re-seq #"," (.getTextContent node))))
 
    :general-punctuation
-   (count (re-seq punctuation (.getTextContent node)))
+   (p/prof :general-punctuation (count (re-seq punctuation (.getTextContent node))))
    
    :inner-divs
-   (count (children-matching node #(= (.getNodeName %) "div")))
+   (p/prof :inner-divs (count (children-matching node #(= (.getNodeName %) "div"))))
    
    :long-text?
-   (if (> (count (.getTextContent node)) 30) 1.0 0.0)})
+   (p/prof :long-text? (if (> (count (.getTextContent node)) 30) 1.0 0.0))})
 
 (defn initialize-cleaner-props [cleaner]
   "Takes an HTMLCleaner object and makes it ignore comments, script tags, and style tags"
@@ -84,7 +85,7 @@
     (.setOmitComments true)
     (.setPruneTags "script,style")))
 
-(defn elements [dom tag]
+(defn elements [^Document dom ^String tag]
   "Returns a collection of elements matching the given tag name in the dom"
   (let [nodes (.getElementsByTagName dom tag)]
     (map identity
@@ -92,12 +93,12 @@
            (.item nodes i)))))
 
 
-(defn remove-children-matching [node pred]
+(defn remove-children-matching [^Node node pred]
   "Removes children matching a predicate and returns the node"
   (doseq [child (children-matching node pred)] (.removeChild node child))
   node)
 
-(defn attribute [node name]
+(defn attribute [^Node node ^String name]
   (let [attributes (.getAttributes node)
         attribute (if attributes (.getNamedItem attributes name) nil)]
     (if attribute (.getValue attribute) "")))
@@ -115,15 +116,6 @@
 ;;;;;; These are the two functions that should really be called
 
 
-(defn find-content-div [dom]
-  "Returns the node that most likely to contain the majority of the content of the page"
-  (let [divs (filter #(not (nil? %)) (doto (elements dom "div") (clean-content-divs) (identity)))]
-    (if (not (= 0 (count divs)))
-      (let [content (apply max-key
-                           (fn [div] (infer.measures/sparse-dot-product (weight-div div) div-weight-map))
-                           divs)]
-        (if (> (count (.getTextContent content)) 50) content nil)) nil)))
-
 (defn clean-content-divs [divs]
   (doseq [div divs]
     (remove-children-matching div
@@ -131,13 +123,24 @@
                                        (+ (count (re-seq bad-words (attribute % "class")))
                                           (count (re-seq bad-words (attribute % "id")))))))))
 
-(defn clean-content [content]
+(defn find-content-div [dom]
+  "Returns the node that most likely to contain the majority of the content of the page"
+  (let [divs (elements dom "div")]
+    (if (not (= 0 (count divs)))
+      (let [content-div (apply max-key
+                               (fn [div] (infer.measures/sparse-dot-product (weight-div div) div-weight-map))
+                               divs)]
+        (if (> (count (.getTextContent content-div)) 50) content-div nil)) nil)))
+
+
+
+(defn clean-content [^String content]
   (st/lower-case (st/replace-re punctuation " " (st/replace-re #"&apos;" "'" (st/replace-re #"(\n|\r)+" " " (StringEscapeUtils/unescapeHtml content))))))
 
-(defn find-content [url]
-  (let [content-div (find-content-div (dom url))]
+(defn find-content [^String url]
+  (let [content-div (p/prof :find-content (find-content-div (dom url)))]
     (if content-div (clean-content (.getTextContent content-div)) nil)))
 
-(defn words [string]
+(defn words [^String string]
   (st/split #" " string))
 
