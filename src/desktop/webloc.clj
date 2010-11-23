@@ -1,4 +1,4 @@
-(ns desktop.webloc.core
+(ns desktop.webloc
   (:require [clojure.contrib.string :as st]
             [clojure.xml :as xml]
             [clojure.zip :as zip]

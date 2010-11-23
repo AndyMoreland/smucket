@@ -1,4 +1,4 @@
-(ns desktop.statistics.core)
+(ns desktop.statistics)
 
 (defn diff-maps [map1 map2]
   "Returns words that are in map1 that are not in map 2"
