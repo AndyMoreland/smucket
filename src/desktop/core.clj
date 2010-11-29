@@ -1,6 +1,8 @@
 (ns desktop.core
+  (:gen-class)
   (:require [clojure.contrib.string :as st]
-            [somnium.congomongo :as cm])
+            [somnium.congomongo :as cm]
+            [desktop webloc])
   (:import [org.joda.time DateTime Instant]
            java.io.File
            java.util.Date
@@ -10,6 +12,7 @@
 (def desktop-dir "/Users/andrew/Desktop")
 (def keep-running (atom true))
 (def bad-files #{".DS_Store" ".localized"})
+(def callbacks {"webloc" desktop.webloc/process})
 
 (defn extract-file-extensions [file]
   (rest (st/split #"\." (last (st/split #"\/" file)))))
@@ -31,8 +34,7 @@
          (filter good-file? (seq files)))))
 
 (defn callback [file]
-  (cm/insert! :files { :name file
-                   :words (frequencies (st/split #"\W+" (slurp file)))}))
+  (println (desktop.webloc/process file)))
 
 (defn process
   "run callbacks on a changed file"
@@ -40,23 +42,30 @@
   ;;; check filetype, check name, run registered callbacks
   (callback file))
 
-(defn callback [file]
-  (println (desktop.htmlparser.core/find-content (desktop.webloc.core/extract-url-from-webloc file)))
-  )
+(defn callback [file date]
+  (println (str "Processing: " file ))
+  (let [file-extensions (extract-file-extensions file)]
+    (cm/insert! :files
+                (into {:file file :date date}
+                              (reduce
+                               (fn [acc [ext f]] (conj acc {ext (f file)})) {}
+                               (filter #(some #{(first %)} file-extensions) callbacks))))))
 
 (defn run []
   (loop [date (Date.)]
     (Thread/sleep 1000)
     (println "Firing.")
     (doseq [file (filter #(>= 0 (.compareTo date (Date. (last-modified %)))) (list-desktop-files))]
-      (process file))
+      (future (process file date)))
     
     (if @keep-running
       (recur (Date.))
       (println "Terminating"))))
 
-(defn main []
-  "Starts the loop in another threaD"
+(defn -main [& args]
+  "Starts the loop in another thread"
+  (cm/mongo! :db "desktop")
+ 
   (def keep-running (atom true))
   (.start (Thread. run)))
 

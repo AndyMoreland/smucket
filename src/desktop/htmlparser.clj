@@ -51,9 +51,3 @@
         serializer (DomSerializer. props)
         ]
     (.createDOM serializer node)))
-
-;;;;;; These are the two functions that should really be called
-
-
-
-

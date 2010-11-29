@@ -9,5 +9,6 @@
                  [congomongo "0.1.3-SNAPSHOT"]]
 	
   :dev-dependencies [[swank-clojure "1.3.0-SNAPSHOT"]]
-  :repositories  {"apache" "https://repository.apache.org/content/repositories/releases/"})
+  :repositories  {"apache" "https://repository.apache.org/content/repositories/releases/"}
+  :main desktop.core)
 

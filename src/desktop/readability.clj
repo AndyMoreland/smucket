@@ -32,23 +32,23 @@
 
 (defn weight-div [node]
   "Takes an HTML node and returns a map containing numeric 'facts' about the div that are important; will be cross-producted with the weight map above"
-  :child-paragraphs
-  (count (parser/children-matching node #(= (.getNodeName %) "p")))
+  { :child-paragraphs
+   (count (parser/children-matching node #(= (.getNodeName %) "p")))
    
-  :bad-id
-  (count (re-seq bad-words (parser/attribute node "id")))
+   :bad-id
+   (count (re-seq bad-words (parser/attribute node "id")))
   
-  :bad-class
-  (count (re-seq bad-words (parser/attribute  node "class")))
+   :bad-class
+   (count (re-seq bad-words (parser/attribute  node "class")))
   
-  :good-id
-  (count (re-seq good-words (parser/attribute node "id")))
+   :good-id
+   (count (re-seq good-words (parser/attribute node "id")))
   
-  :good-class
-  (count (re-seq good-words (parser/attribute node "class")))
+   :good-class
+   (count (re-seq good-words (parser/attribute node "class")))
   
-  :inner-divs
-  (count (parser/children-matching node #(= (.getNodeName %) "div")))
+   :inner-divs
+   (count (parser/children-matching node #(= (.getNodeName %) "div")))}
   )
 
 (defn clean-content-divs [divs]
@@ -64,7 +64,7 @@
 
 (defn find-content-div [dom]
   "Returns the node that most likely to contain the majority of the content of the page"
-  (let [clean-divs (filter #(not (nil? %)) (parser/elements parser/dom "div"))]
+  (let [clean-divs (filter #(not (nil? %)) (parser/elements dom "div"))]
     (if (not (= 0 (count clean-divs)))
       (let [content-div (apply max-key
                                (fn [div] (infer.measures/sparse-dot-product (weight-div div) div-weight-map))
