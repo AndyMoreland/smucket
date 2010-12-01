@@ -1,4 +1,4 @@
-(ns desktop.readability
+(ns smucket.readability
   (:require [clojure.contrib.string :as st]
             [infer.measures :only [sparse-dot-product] :as im]
             [clojure.contrib.profile :as p]

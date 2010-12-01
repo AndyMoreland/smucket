@@ -1,4 +1,4 @@
-(ns desktop.statistics)
+(ns smucket.statistics)
 
 (defn diff-maps [map1 map2]
   "Returns words that are in map1 that are not in map 2"

@@ -1,4 +1,4 @@
-(ns desktop.core
+(ns smucket.core
   (:gen-class)
   (:require [clojure.contrib.string :as st]
             [somnium.congomongo :as cm]

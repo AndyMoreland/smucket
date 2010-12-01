@@ -1,4 +1,4 @@
-(ns desktop.htmlparser
+(ns smucket.htmlparser
   (:require [clojure.contrib.string :as st]
             [infer.measures :only [sparse-dot-product] :as im]
             [clojure.contrib.profile :as p])
