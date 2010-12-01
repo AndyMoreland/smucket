@@ -1,17 +1,41 @@
-# desktop
+Smucket
+=======
 
-FIXME: write description
+Introduction
+-------
 
-## Usage
+I don't like browser bookmarks, and delicious has flaws that I can't address because I can't touch the source. This is my attempt to scratch my cross-platform bookmarking itch.
 
-FIXME: write
+I drag .webloc files from browsers on Mac OS X onto my desktop. Smucket parses these new files and attempts to extract and save their content in a mongodb database.
 
-## Installation
+Installation
+-------
 
-FIXME: write
+1. Download source
+2. Install [leiningen](https://github.com/technomancy/leiningen) or cake
+3. Run `lein deps` in the project root
+4. Run `lein uberjar`
 
-## License
+Usage
+-------
 
-Copyright (C) 2010 FIXME
+The following command will start smucket. You may wish to run it in a screen.
+    
+    `java -jar <name of the STANDALONE jar generated>`
 
-Distributed under the Eclipse Public License, the same as Clojure.
+Todo
+-------
+
+* Sync with delicious
+* Alternate entry methods
+* More filetypes
+* Better analysis (perhaps user-defined "important words" to group related pages.)
+* Improve my implementation of the readability algorithm
+
+
+License
+-------
+
+Copyright 2010, Andrew Moreland.
+
+Distributed under the GPLv3 License
